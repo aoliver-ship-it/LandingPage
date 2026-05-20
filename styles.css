@@ -240,7 +240,7 @@ img {
 }
 
 .logo-img {
-  height: 85px;
+  height: 105px;
   width: auto;
   object-fit: contain;
   transition: var(--transition-smooth);
@@ -253,7 +253,7 @@ img {
 }
 
 .header.scrolled .logo-img {
-  height: 65px;
+  height: 80px;
 }
 
 .logo-brand-info {
