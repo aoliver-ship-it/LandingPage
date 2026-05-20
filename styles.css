@@ -225,12 +225,12 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 115px;
+  height: 160px;
   transition: var(--transition-smooth);
 }
 
 .header.scrolled .nav-container {
-  height: 90px;
+  height: 110px;
 }
 
 .logo-wrapper {
@@ -240,7 +240,7 @@ img {
 }
 
 .logo-img {
-  height: 105px;
+  height: 150px;
   width: auto;
   object-fit: contain;
   transition: var(--transition-smooth);
@@ -253,7 +253,7 @@ img {
 }
 
 .header.scrolled .logo-img {
-  height: 80px;
+  height: 100px;
 }
 
 .logo-brand-info {
@@ -314,7 +314,7 @@ img {
     font-size: 1.6rem;
   }
   .logo-img {
-    height: 75px;
+    height: 120px;
   }
 }
 
@@ -330,10 +330,10 @@ img {
     font-size: 1.5rem;
   }
   .logo-img {
-    height: 65px;
+    height: 90px;
   }
   .header.scrolled .logo-img {
-    height: 55px;
+    height: 75px;
   }
 }
 
