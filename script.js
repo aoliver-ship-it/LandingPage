@@ -577,9 +577,12 @@ function exportLeadsToCSV() {
   }
   
   // Build header row with 12 columns
-  const NOTIFICATION_EMAIL = 'asesoria@ccambiarios.com'; // <– ¡IMPORTANTE! Cambia esto por tu correo real Empresa', 
-    'Teléfono de Contacto', 
-    'Correo Electrónico Corporativo', 
+  const headers = [
+    'Fecha',
+    'Nombre',
+    'Empresa',
+    'Teléfono',
+    'Correo Electrónico',
     'Servicio Solicitado',
     'Fecha de Contacto CRM',
     'Visita Agendada',
@@ -588,6 +591,7 @@ function exportLeadsToCSV() {
     'Estado Lead',
     'Detalles del Caso / Notas'
   ];
+  
   
   // Format cells
   const rows = leads.map(lead => {
