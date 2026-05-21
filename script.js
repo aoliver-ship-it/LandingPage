@@ -577,10 +577,7 @@ function exportLeadsToCSV() {
   }
   
   // Build header row with 12 columns
-  const headers = [
-    'Fecha de Registro', 
-    'Nombre Completo', 
-    'Nombre de Empresa', 
+  const NOTIFICATION_EMAIL = 'asesoria@ccambiarios.com'; // <– ¡IMPORTANTE! Cambia esto por tu correo real Empresa', 
     'Teléfono de Contacto', 
     'Correo Electrónico Corporativo', 
     'Servicio Solicitado',
