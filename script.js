@@ -4,7 +4,8 @@
  */
 
 // URL del Web App de Google Apps Script (Reemplazar por tu URL para conectar con Google Sheets y Gmail)
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQHHYih_XxRmpgZMUWqkz93SCIPq0lXRF6RXgNManYX7XBslpPTujXTZe3pZbBYO1c/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQHHYih_XxRmpgZMUWqkz93SCIPq0lXRF6RXgNManYX7XBslpPTujXTZe3pZbBYO1c/exechttps://script.google.com/macros/s/AKfycbwQHHYih_XxRmpgZMUWqkz93SCIPq0lXRF6RXgNManYX7XBslpPTujXTZe3pZbBYO1c/exec';
+NOTIFICATION_EMAIL = 'asesoria@ccambiarios.com';
 
 document.addEventListener('DOMContentLoaded', () => {
   initScrollHeader();
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initScrollHeader() {
   const header = document.querySelector('.header');
-  
+
   const handleScroll = () => {
     if (window.scrollY > 50) {
       header.classList.add('scrolled');
@@ -28,7 +29,7 @@ function initScrollHeader() {
       header.classList.remove('scrolled');
     }
   };
-  
+
   window.addEventListener('scroll', handleScroll);
   handleScroll(); // Run once in case user loaded page scrolled down
 }
@@ -40,20 +41,20 @@ function initScrollHeader() {
 function initServiceSelectRedirect() {
   const ctaButtons = document.querySelectorAll('.service-card .service-link, .hero-btns .btn-primary');
   const serviceSelect = document.getElementById('servicio');
-  
+
   ctaButtons.forEach(button => {
     button.addEventListener('click', (e) => {
       e.preventDefault();
-      
+
       const targetId = button.getAttribute('href');
       const targetElement = document.querySelector(targetId);
-      
+
       // Pre-select service if specified in data attribute
       const serviceValue = button.getAttribute('data-service');
       if (serviceValue && serviceSelect) {
         serviceSelect.value = serviceValue;
       }
-      
+
       // Smooth scroll to target
       if (targetElement) {
         window.scrollTo({
@@ -72,9 +73,9 @@ function initFormValidation() {
   const form = document.getElementById('lead-form');
   const overlay = document.querySelector('.success-overlay');
   const resetBtn = document.getElementById('success-reset');
-  
+
   if (!form) return;
-  
+
   const fields = {
     nombre: document.getElementById('nombre'),
     telefono: document.getElementById('telefono'),
@@ -82,7 +83,7 @@ function initFormValidation() {
     empresa: document.getElementById('empresa'),
     servicio: document.getElementById('servicio')
   };
-  
+
   // Validation patterns
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[0-9+\s\-()]{7,15}$/;
@@ -91,7 +92,7 @@ function initFormValidation() {
   const validateField = (field, condition, message) => {
     const group = field.closest('.form-group');
     const feedback = group.querySelector('.invalid-feedback');
-    
+
     if (condition) {
       group.classList.remove('is-invalid');
       if (feedback) feedback.textContent = '';
@@ -107,19 +108,19 @@ function initFormValidation() {
   fields.nombre.addEventListener('blur', () => {
     validateField(fields.nombre, fields.nombre.value.trim().length >= 3, 'El nombre debe tener al menos 3 caracteres.');
   });
-  
+
   fields.telefono.addEventListener('blur', () => {
     validateField(fields.telefono, phoneRegex.test(fields.telefono.value.trim()), 'Ingrese un número de teléfono válido.');
   });
-  
+
   fields.email.addEventListener('blur', () => {
     validateField(fields.email, emailRegex.test(fields.email.value.trim()), 'Ingrese un correo electrónico válido.');
   });
-  
+
   fields.empresa.addEventListener('blur', () => {
     validateField(fields.empresa, fields.empresa.value.trim().length >= 2, 'Ingrese el nombre de su empresa.');
   });
-  
+
   fields.servicio.addEventListener('change', () => {
     validateField(fields.servicio, fields.servicio.value !== '', 'Por favor, seleccione un servicio.');
   });
@@ -127,14 +128,14 @@ function initFormValidation() {
   // Handle submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     // Validate all fields on submit
     const isNombreValid = validateField(fields.nombre, fields.nombre.value.trim().length >= 3, 'El nombre debe tener al menos 3 caracteres.');
     const isTelefonoValid = validateField(fields.telefono, phoneRegex.test(fields.telefono.value.trim()), 'Ingrese un número de teléfono válido.');
     const isEmailValid = validateField(fields.email, emailRegex.test(fields.email.value.trim()), 'Ingrese un correo electrónico válido.');
     const isEmpresaValid = validateField(fields.empresa, fields.empresa.value.trim().length >= 2, 'Ingrese el nombre de su empresa.');
     const isServicioValid = validateField(fields.servicio, fields.servicio.value !== '', 'Por favor, seleccione un servicio.');
-    
+
     if (isNombreValid && isTelefonoValid && isEmailValid && isEmpresaValid && isServicioValid) {
       // Simulate API loading state
       const submitBtn = form.querySelector('button[type="submit"]');
@@ -145,7 +146,7 @@ function initFormValidation() {
           <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="80, 200" stroke-dashoffset="0" stroke-linecap="round"></circle>
         </svg> Enviando...
       `;
-      
+
       // Injecting spinner style dynamically to keep it self-contained
       if (!document.getElementById('spinner-style')) {
         const style = document.createElement('style');
@@ -175,9 +176,9 @@ function initFormValidation() {
 
       // Guardado local de respaldo inmediato
       saveLeadToDatabase(leadData);
-      
+
       const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
-      
+
       if (isCloudConfigured) {
         try {
           await saveOrUpdateLeadCloud(leadData, true);
@@ -188,10 +189,10 @@ function initFormValidation() {
         // Simulación premium si no está en la nube para mantener UX fluida
         await new Promise(resolve => setTimeout(resolve, 1200));
       }
-      
+
       // Show success animation overlay
       overlay.classList.add('active');
-      
+
       // Reset submit button state
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalText;
@@ -203,7 +204,7 @@ function initFormValidation() {
     resetBtn.addEventListener('click', () => {
       overlay.classList.remove('active');
       form.reset();
-      
+
       // Clear validation state
       Object.values(fields).forEach(field => {
         const group = field.closest('.form-group');
@@ -218,7 +219,7 @@ function initFormValidation() {
  */
 function initMobileMenu() {
   const menuBtn = document.querySelector('.nav-mobile-btn');
-  
+
   if (menuBtn) {
     menuBtn.addEventListener('click', () => {
       // In a single-page corporate template, scroll to CTA is the primary path
@@ -247,23 +248,23 @@ function initAdminDashboard() {
   const logoutBtn = document.getElementById('db-logout-btn');
   const exportBtn = document.getElementById('db-export-btn');
   const searchInput = document.getElementById('db-search');
-  
+
   // Listen for hash navigation
   window.addEventListener('hashchange', handleHashNavigation);
   handleHashNavigation(); // Run immediately in case loaded directly with hash
-  
+
   // Handle secret password submit
   if (loginForm && passcodeField) {
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const passcode = passcodeField.value.trim();
       const gateError = document.getElementById('gate-error');
-      
+
       if (passcode === 'CCA2026') {
         gateError.style.display = 'none';
         sessionStorage.setItem('cca_admin_auth', 'true');
         passcodeField.value = '';
-        
+
         // Navigate
         toggleDashboardVisibility(true, false);
         renderAdminLeads();
@@ -271,33 +272,33 @@ function initAdminDashboard() {
         gateError.style.display = 'block';
       }
     });
-    
+
     // Clear validation error on type
     passcodeField.addEventListener('input', () => {
       const gateError = document.getElementById('gate-error');
       if (gateError) gateError.style.display = 'none';
     });
   }
-  
+
   // Close / Exit buttons
   if (gateCloseBtn) {
     gateCloseBtn.addEventListener('click', () => {
       window.location.hash = '';
     });
   }
-  
+
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       sessionStorage.removeItem('cca_admin_auth');
       window.location.hash = '';
     });
   }
-  
+
   // Export button
   if (exportBtn) {
     exportBtn.addEventListener('click', exportLeadsToCSV);
   }
-  
+
   // Filter leads on search typing
   if (searchInput) {
     searchInput.addEventListener('input', renderAdminLeads);
@@ -316,20 +317,20 @@ function toggleDashboardVisibility(showAdmin, showGate) {
     document.querySelector('#contact'),
     document.querySelector('.footer')
   ];
-  
+
   const adminGate = document.getElementById('admin-gate');
   const adminDashboard = document.getElementById('admin-dashboard');
-  
+
   if (showAdmin || showGate) {
     // Hide standard landing page elements
     mainElements.forEach(el => {
       if (el) el.style.display = 'none';
     });
-    
+
     // Manage overlay visibility
     if (adminGate) adminGate.style.display = showGate ? 'flex' : 'none';
     if (adminDashboard) adminDashboard.style.display = showAdmin ? 'flex' : 'none';
-    
+
     // Disable main body scroll for absolute focus
     document.body.style.overflow = 'hidden';
   } else {
@@ -337,11 +338,11 @@ function toggleDashboardVisibility(showAdmin, showGate) {
     mainElements.forEach(el => {
       if (el) el.style.display = '';
     });
-    
+
     // Hide admin overlays
     if (adminGate) adminGate.style.display = 'none';
     if (adminDashboard) adminDashboard.style.display = 'none';
-    
+
     // Enable body scroll
     document.body.style.overflow = '';
   }
@@ -352,7 +353,7 @@ function toggleDashboardVisibility(showAdmin, showGate) {
  */
 function handleHashNavigation() {
   const hash = window.location.hash;
-  
+
   if (hash === '#admin') {
     const isAuthed = sessionStorage.getItem('cca_admin_auth') === 'true';
     if (isAuthed) {
@@ -372,14 +373,14 @@ function handleHashNavigation() {
 function getFormattedDate() {
   const now = new Date();
   const pad = (num) => String(num).padStart(2, '0');
-  
+
   const year = now.getFullYear();
   const month = pad(now.getMonth() + 1);
   const day = pad(now.getDate());
   const hours = pad(now.getHours());
   const minutes = pad(now.getMinutes());
   const seconds = pad(now.getSeconds());
-  
+
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
@@ -403,25 +404,25 @@ function renderAdminLeads() {
   const leadsRows = document.getElementById('db-leads-rows');
   const emptyState = document.getElementById('db-empty-message');
   const searchInput = document.getElementById('db-search');
-  
+
   const totalLeadsSpan = document.getElementById('stat-total-leads');
   const newLeadsSpan = document.getElementById('stat-new-leads');
   const processLeadsSpan = document.getElementById('stat-process-leads');
-  
+
   if (!leadsRows) return;
-  
+
   const leads = JSON.parse(localStorage.getItem('cca_leads') || '[]');
   const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
-  
+
   // Calculate summary stats
   const total = leads.length;
   const nuevoCount = leads.filter(l => l.estado === 'Nuevo').length;
   const procesoCount = leads.filter(l => l.estado === 'En Proceso').length;
-  
+
   if (totalLeadsSpan) totalLeadsSpan.textContent = total;
   if (newLeadsSpan) newLeadsSpan.textContent = nuevoCount;
   if (processLeadsSpan) processLeadsSpan.textContent = procesoCount;
-  
+
   // Filter leads based on search term
   const filteredLeads = leads.filter(lead => {
     return (
@@ -433,16 +434,16 @@ function renderAdminLeads() {
       lead.telefono.toLowerCase().includes(searchTerm)
     );
   });
-  
+
   // Empty state handling
   if (filteredLeads.length === 0) {
     leadsRows.innerHTML = '';
     if (emptyState) emptyState.style.display = 'flex';
     return;
   }
-  
+
   if (emptyState) emptyState.style.display = 'none';
-  
+
   // Render rows dynamically
   leadsRows.innerHTML = filteredLeads.map(lead => {
     // Visit Status
@@ -477,7 +478,7 @@ function renderAdminLeads() {
     let statusClass = 'status-new';
     if (lead.estado === 'En Proceso') statusClass = 'status-process';
     if (lead.estado === 'Contactado') statusClass = 'status-contacted';
-    
+
     return `
       <tr data-id="${lead.id}">
         <td style="white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #64748b;">
@@ -525,7 +526,7 @@ function renderAdminLeads() {
 /**
  * Globally-exposed status modifier function
  */
-window.updateLeadStatus = async function(id, newStatus) {
+window.updateLeadStatus = async function (id, newStatus) {
   try {
     const leads = JSON.parse(localStorage.getItem('cca_leads') || '[]');
     const leadIndex = leads.findIndex(l => l.id === id);
@@ -533,7 +534,7 @@ window.updateLeadStatus = async function(id, newStatus) {
       leads[leadIndex].estado = newStatus;
       localStorage.setItem('cca_leads', JSON.stringify(leads));
       renderAdminLeads();
-      
+
       const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
       if (isCloudConfigured) {
         showCRMToast('Sincronizando estado en la nube...');
@@ -553,7 +554,7 @@ window.updateLeadStatus = async function(id, newStatus) {
 /**
  * Globally-exposed record deletion function
  */
-window.deleteLead = function(id) {
+window.deleteLead = function (id) {
   if (confirm('¿Está seguro de que desea eliminar permanentemente este registro de contacto?')) {
     try {
       const leads = JSON.parse(localStorage.getItem('cca_leads') || '[]');
@@ -575,7 +576,7 @@ function exportLeadsToCSV() {
     alert('No hay leads almacenados para exportar.');
     return;
   }
-  
+
   // Build header row with 12 columns
   const headers = [
     'Fecha',
@@ -591,8 +592,8 @@ function exportLeadsToCSV() {
     'Estado Lead',
     'Detalles del Caso / Notas'
   ];
-  
-  
+
+
   // Format cells
   const rows = leads.map(lead => {
     // Translate visita value to human readable Spanish
@@ -621,21 +622,21 @@ function exportLeadsToCSV() {
       lead.detallesCaso || ''
     ];
   });
-  
+
   // Enclose values in quotes and escape internal quotes to follow RFC 4180
   const csvContent = [headers, ...rows]
     .map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
     .join('\n');
-    
+
   // Export as download with UTF-8 BOM to prevent accents displaying as corrupt text in Excel
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement('a');
   link.setAttribute('href', url);
   link.setAttribute('download', `leads_comerciales_cca_sas_${new Date().toISOString().split('T')[0]}.csv`);
   link.style.visibility = 'hidden';
-  
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -674,7 +675,7 @@ function formatCOP(value) {
 function initCRMInputListeners() {
   const valInput = document.getElementById('crm-field-valor');
   const formattedSpan = document.getElementById('crm-valor-formatted');
-  
+
   if (valInput && formattedSpan) {
     valInput.addEventListener('input', (e) => {
       const val = parseInt(e.target.value, 10);
@@ -710,7 +711,7 @@ function initCRMInputListeners() {
 /**
  * Opens double-column glassmorphic modal prefilled with CRM Case Details
  */
-window.openCRMModal = function(leadId) {
+window.openCRMModal = function (leadId) {
   currentEditingLeadId = leadId;
   const leads = JSON.parse(localStorage.getItem('cca_leads') || '[]');
   const lead = leads.find(l => l.id === leadId);
@@ -726,11 +727,11 @@ window.openCRMModal = function(leadId) {
   // Prefill interactive CRM controls
   document.getElementById('crm-field-fecha-contacto').value = lead.fechaContacto || '';
   document.getElementById('crm-field-visita').value = lead.visita || 'sin_agendar';
-  
+
   const valor = lead.valorServicio || 0;
   document.getElementById('crm-field-valor').value = valor || '';
   document.getElementById('crm-valor-formatted').textContent = formatCOP(valor);
-  
+
   document.getElementById('crm-field-pago').value = lead.estadoPago || 'sin_cotizar';
   document.getElementById('crm-field-detalles').value = lead.detallesCaso || '';
 
@@ -750,7 +751,7 @@ window.openCRMModal = function(leadId) {
 /**
  * Closes the CRM Modal and recovers dashboard overlay viewport stability
  */
-window.closeCRMModal = function() {
+window.closeCRMModal = function () {
   const modal = document.getElementById('crm-modal');
   if (modal) {
     modal.style.display = 'none';
@@ -806,14 +807,14 @@ async function saveCRMDetails(e) {
   leads[leadIndex] = updatedLead;
 
   localStorage.setItem('cca_leads', JSON.stringify(leads));
-  
+
   // Render table changes and close modal
   renderAdminLeads();
   closeCRMModal();
 
   // Floating notification trigger
   showCRMToast(`Guardando cambios en la nube...`);
-  
+
   const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
   if (isCloudConfigured) {
     try {
@@ -842,7 +843,7 @@ function showCRMToast(message) {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px; color: var(--color-success);"><polyline points="20 6 9 17 4 12"></polyline></svg>
     <span>${message}</span>
   `;
-  
+
   Object.assign(toast.style, {
     position: 'fixed',
     bottom: '30px',
@@ -891,7 +892,7 @@ async function saveOrUpdateLeadCloud(lead, isNew = false) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.trim() === '' || APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT')) {
     return true;
   }
-  
+
   try {
     const payload = isNew ? lead : { action: 'updateCRM', passcode: 'CCA2026', lead };
     const response = await fetch(APPS_SCRIPT_URL, {
@@ -911,17 +912,17 @@ async function saveOrUpdateLeadCloud(lead, isNew = false) {
 async function loadLeadsFromServer() {
   const leadsRows = document.getElementById('db-leads-rows');
   const emptyState = document.getElementById('db-empty-message');
-  
+
   if (!leadsRows) return;
-  
+
   const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
-  
+
   if (!isCloudConfigured) {
     // Si no está configurada la nube, renderizar lo que haya en LocalStorage
     renderAdminLeads();
     return;
   }
-  
+
   // Renderizar estado de carga premium en la tabla
   leadsRows.innerHTML = `
     <tr>
@@ -940,13 +941,13 @@ async function loadLeadsFromServer() {
   try {
     const response = await fetch(`${APPS_SCRIPT_URL}?passcode=CCA2026`);
     if (!response.ok) throw new Error('Error al conectar con la API de Google');
-    
+
     const leads = await response.json();
-    
+
     if (leads && leads.status === 'error') {
       throw new Error(leads.message);
     }
-    
+
     // Guardar en la caché de LocalStorage y renderizar
     localStorage.setItem('cca_leads', JSON.stringify(leads));
     renderAdminLeads();
