@@ -5,7 +5,6 @@
 
 // URL del Web App de Google Apps Script (Reemplazar por tu URL para conectar con Google Sheets y Gmail)
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQHHYih_XxRmpgZMUWqkz93SCIPq0lXRF6RXgNManYX7XBslpPTujXTZe3pZbBYO1c/exechttps://script.google.com/macros/s/AKfycbwQHHYih_XxRmpgZMUWqkz93SCIPq0lXRF6RXgNManYX7XBslpPTujXTZe3pZbBYO1c/exec';
-NOTIFICATION_EMAIL = 'asesoria@ccambiarios.com';
 
 document.addEventListener('DOMContentLoaded', () => {
   initScrollHeader();
