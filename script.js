@@ -4,8 +4,7 @@
  */
 
 // URL del Web App de Google Apps Script (Reemplazar por tu URL para conectar con Google Sheets y Gmail)
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwITcXCzY8TEwleQTkY4bQ0jovRwobtuHnUBmfyCms-e1QIjwy92C4L3O0V8iGeRQmb/exec';
-
+const APPS_SCRIPT_URL = ''https://script.google.com/macros/s/AKfycbwNOs1S_rrUhc9mvXObASHBooOQF1iUnfN9YmcHQIlpPYTm15YWdRtIz8K4PcLenEFr/exec
 document.addEventListener('DOMContentLoaded', () => {
   initScrollHeader();
   initServiceSelectRedirect();
@@ -645,8 +644,8 @@ function exportLeadsToCSV() {
  * Simple HTML sanitizer
  */
 function escapeHtml(str) {
-  if (!str) return '';
-  return str
+  if (str === null || str === undefined) return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -885,7 +884,11 @@ function showCRMToast(message) {
 }
 
 /**
- * Realiza la llamada HTTP a Google Apps Script para guardar o actualizar
+ * Realiza la llamada HTTP a Google Apps Script para guardar o actualizar.
+ * NOTA: Se usa mode 'no-cors' porque Google Apps Script no devuelve los
+ * headers CORS necesarios para peticiones cross-origin desde el navegador.
+ * Con 'no-cors' la respuesta es opaca (no podemos leer el body), pero el
+ * servidor SÍ recibe y procesa los datos correctamente.
  */
 async function saveOrUpdateLeadCloud(lead, isNew = false) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.trim() === '' || APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT')) {
@@ -893,12 +896,21 @@ async function saveOrUpdateLeadCloud(lead, isNew = false) {
   }
 
   try {
-    const payload = isNew ? lead : { action: 'updateCRM', passcode: 'CCA2026', lead };
-    const response = await fetch(APPS_SCRIPT_URL, {
+    // Siempre incluir action y passcode para que el Apps Script pueda
+    // identificar el tipo de operación y autenticar la solicitud.
+    const payload = isNew
+      ? { action: 'newLead', passcode: 'CCA2026', lead }
+      : { action: 'updateCRM', passcode: 'CCA2026', lead };
+
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors', // Requerido para llamadas cross-origin a Google Apps Script
+      headers: { 'Content-Type': 'text/plain' }, // 'application/json' dispara preflight que GAS no maneja
       body: JSON.stringify(payload)
     });
-    return response.ok;
+
+    // Con mode 'no-cors' la respuesta es siempre opaca; si no lanzó excepción, asumimos éxito.
+    return true;
   } catch (error) {
     console.error('Error de sincronización con Google Apps Script:', error);
     return false;
@@ -938,23 +950,48 @@ async function loadLeadsFromServer() {
   if (emptyState) emptyState.style.display = 'none';
 
   try {
-    const response = await fetch(`${APPS_SCRIPT_URL}?passcode=CCA2026`);
-    if (!response.ok) throw new Error('Error al conectar con la API de Google');
+    const response = await fetch(`${APPS_SCRIPT_URL}?passcode=CCA2026&action=getLeads`);
+    if (!response.ok) throw new Error(`Error HTTP ${response.status} al conectar con la API de Google`);
 
-    const leads = await response.json();
-
-    if (leads && leads.status === 'error') {
-      throw new Error(leads.message);
+    // Parsear respuesta — GAS puede devolver 'application/json', 'text/plain', o variantes con charset
+    const text = await response.text();
+    let serverLeads;
+    try {
+      serverLeads = JSON.parse(text);
+    } catch {
+      throw new Error('No se pudo parsear la respuesta JSON del servidor.');
     }
 
-    // Guardar en la caché de LocalStorage y renderizar
-    localStorage.setItem('cca_leads', JSON.stringify(leads));
+    if (serverLeads && serverLeads.status === 'error') {
+      throw new Error(serverLeads.message);
+    }
+
+    if (!Array.isArray(serverLeads)) {
+      throw new Error('Formato de datos inesperado: se esperaba un arreglo de leads.');
+    }
+
+    // ── MERGE INTELIGENTE ────────────────────────────────────────────────────
+    // Combina datos del servidor con datos locales para no perder ningún lead.
+    // El servidor tiene prioridad para leads existentes, pero se conservan los
+    // leads locales que aún no llegaron al servidor (guardados offline).
+    const localLeads  = JSON.parse(localStorage.getItem('cca_leads') || '[]');
+    const serverIds   = new Set(serverLeads.map(l => l.id));
+    const onlyLocal   = localLeads.filter(l => !serverIds.has(l.id));
+    const mergedLeads = [...serverLeads, ...onlyLocal];
+    // ────────────────────────────────────────────────────────────────────────
+
+    localStorage.setItem('cca_leads', JSON.stringify(mergedLeads));
     renderAdminLeads();
-    showCRMToast('Base de datos sincronizada en tiempo real.');
+
+    const syncMsg = onlyLocal.length > 0
+      ? `Sincronizado: ${serverLeads.length} en la nube + ${onlyLocal.length} pendiente(s) de subir.`
+      : 'Base de datos sincronizada en tiempo real.';
+    showCRMToast(syncMsg);
+
   } catch (error) {
     console.error('Error cargando base de datos en la nube:', error);
-    // Cargar LocalStorage de respaldo
+    // Cargar LocalStorage de respaldo sin borrar nada
     renderAdminLeads();
-    showCRMToast('Error al conectar con Google Sheets. Cargando datos locales.');
+    showCRMToast('Sin conexión con Google Sheets. Mostrando datos locales.');
   }
 }
