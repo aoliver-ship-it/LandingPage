@@ -534,51 +534,23 @@
           <!-- Right Column: Interactive CRM Case Records -->
           <div class="crm-column-right">
             <h4 class="crm-column-title">Gestión Comercial & Seguimiento</h4>
-            
+
+            <div class="form-group crm-field-group">
+              <label for="crm-field-fecha-contacto" class="form-label crm-label">Visita CRM (primera cita programada)</label>
+              <input type="date" id="crm-field-fecha-contacto" class="form-control crm-control-editable">
+            </div>
+
             <div class="form-group crm-field-group">
               <label for="crm-field-visita" class="form-label crm-label">Cita (Visita / Reunión)</label>
-              <select id="crm-field-visita" class="form-control crm-control-editable">
-              <option value="sin_agendar">Sin agendar</option>
-              <option value="virtual">Reunión Virtual (Meet / Teams)</option>
-              <option value="presencial">Visita Presencial (Oficina / Empresa)</option>
-              </select>
-            </div>
-            
-            <div class="form-group crm-field-group">
-              <label for="crm-field-visita" class="form-label crm-label">Agendamiento de Visita / Reunión</label>
               <select id="crm-field-visita" class="form-control crm-control-editable">
                 <option value="sin_agendar">Sin agendar</option>
                 <option value="virtual">Reunión Virtual (Meet / Teams)</option>
                 <option value="presencial">Visita Presencial (Oficina / Empresa)</option>
               </select>
             </div>
-            
-            <div class="form-group crm-field-group">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label for="crm-field-valor" class="form-label crm-label">Valor del Servicio Cotizado (COP)</label>
-                <span id="crm-valor-formatted" style="font-size: 0.85rem; color: var(--color-accent-gold); font-weight: 600;">$ 0</span>
-              </div>
-              <input type="number" id="crm-field-valor" class="form-control crm-control-editable" placeholder="Ej. 2500000">
-            </div>
-            
-            <div class="form-group crm-field-group">
-              <label for="crm-field-pago" class="form-label crm-label">Estado y Esquema de Pago</label>
-              <select id="crm-field-pago" class="form-control crm-control-editable">
-                <option value="sin_cotizar">Sin cotizar / Prospecto</option>
-                <option value="pendiente">Cotizado - Pendiente de Pago</option>
-                <option value="pagado">Pagado Completo (Contado)</option>
-                <option value="cuotas">Financiado (Pago en Cuotas)</option>
-              </select>
-            </div>
-            
-            <div class="form-group crm-field-group">
-              <label for="crm-field-detalles" class="form-label crm-label">Información Detallada del Caso / Notas</label>
-              <textarea id="crm-field-detalles" class="form-control crm-control-editable crm-textarea" placeholder="Describa el historial comercial, los detalles contables de la cuenta de compensación, inconsistencias detectadas de la DIAN, términos del acuerdo comercial..."></textarea>
-            </div>
           </div>
-        </div>
-        
-        <div class="crm-modal-footer">
+          
+          <div class="crm-modal-footer">
           <button type="button" class="btn btn-secondary" id="crm-cancel-btn">Cancelar</button>
           <button type="submit" class="btn btn-gold" id="crm-save-btn">Guardar Cambios</button>
         </div>

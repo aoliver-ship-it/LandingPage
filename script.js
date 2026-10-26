@@ -486,6 +486,8 @@ function renderAdminLeads() {
       </tr>
     `;
   }).join('');
+}
+
 
 
 /**
@@ -691,7 +693,7 @@ window.openCRMModal = function (leadId) {
 
     // Prefill interactive CRM controls
   document.getElementById('crm-field-visita').value = lead.visita || 'sin_agendar';
-
+  document.getElementById('crm-field-fecha-contacto').value = lead.fechaContacto || '';
   const valor = lead.valorServicio || 0;
   document.getElementById('crm-field-valor').value = valor || '';
   document.getElementById('crm-valor-formatted').textContent = formatCOP(valor);
@@ -740,30 +742,29 @@ async function saveCRMDetails(e) {
   const leadIndex = leads.findIndex(l => l.id === currentEditingLeadId);
   if (leadIndex === -1) return;
 
-  const lead = leads[leadIndex];
+    const lead = leads[leadIndex];
 
-   // Parse modified inputs
+  // Parse modified inputs
+  const fechaContacto = document.getElementById('crm-field-fecha-contacto').value;
   const visita = document.getElementById('crm-field-visita').value;
 
-  // Si se agenda una cita, "Nuevo" pasa a "En Proceso"
+  // Si se programa una cita, "Nuevo" pasa a "En Proceso"
   let newEstado = lead.estado;
-  if (lead.estado === 'Nuevo' && visita !== 'sin_agendar') {
+  if (lead.estado === 'Nuevo' && (visita !== 'sin_agendar' || fechaContacto)) {
     newEstado = 'En Proceso';
   }
 
   const updatedLead = {
     ...lead,
+    fechaContacto,
     visita,
     estado: newEstado
   };
+  leads[leadIndex] = updatedLead;
 
-  // Smart Workflow Transition: Upgrade "Nuevo" -> "En Proceso" when saving notes/modifying
-  let newEstado = lead.estado;
-  if (lead.estado === 'Nuevo') {
-    if (fechaContacto || detallesCaso.trim() !== '' || visita !== 'sin_agendar' || valorServicio > 0 || estadoPago !== 'sin_cotizar') {
-      newEstado = 'En Proceso';
-    }
-  }
+  localStorage.setItem('cca_leads', JSON.stringify(leads));
+  
+}
 
   // Update object database schema
   const updatedLead = {
@@ -802,7 +803,6 @@ async function saveCRMDetails(e) {
   } else {
     showCRMToast(`Caso de ${lead.nombre} guardado localmente.`);
   }
-}
 
 /**
  * Renders glassmorphic, floating confirmation toast in the screen bottom corner
@@ -968,3 +968,4 @@ async function loadLeadsFromServer() {
     showCRMToast('Sin conexión con Google Sheets. Mostrando datos locales.');
   }
 }
+
