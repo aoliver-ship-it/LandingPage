@@ -628,6 +628,7 @@ function escapeHtml(str) {
 
 let currentEditingLeadId = null;
 
+
 /**
  * Colombian Peso COP string formatting utility
  */
@@ -673,8 +674,7 @@ function initCRMInputListeners() {
   if (form) {
     form.addEventListener('submit', saveCRMDetails);
   }
-}
-
+};
 /**
  * Opens double-column glassmorphic modal prefilled with CRM Case Details
  */
@@ -730,7 +730,6 @@ window.closeCRMModal = function () {
   }
   currentEditingLeadId = null;
 };
-
 /**
  * Processes CRM modifications, saves them to database, and triggers notifications
  */
@@ -742,13 +741,11 @@ async function saveCRMDetails(e) {
   const leadIndex = leads.findIndex(l => l.id === currentEditingLeadId);
   if (leadIndex === -1) return;
 
-    const lead = leads[leadIndex];
+  const lead = leads[leadIndex];
 
-  // Parse modified inputs
   const fechaContacto = document.getElementById('crm-field-fecha-contacto').value;
   const visita = document.getElementById('crm-field-visita').value;
 
-  // Si se programa una cita, "Nuevo" pasa a "En Proceso"
   let newEstado = lead.estado;
   if (lead.estado === 'Nuevo' && (visita !== 'sin_agendar' || fechaContacto)) {
     newEstado = 'En Proceso';
@@ -763,29 +760,11 @@ async function saveCRMDetails(e) {
   leads[leadIndex] = updatedLead;
 
   localStorage.setItem('cca_leads', JSON.stringify(leads));
-  
-}
 
-  // Update object database schema
-  const updatedLead = {
-    ...lead,
-    fechaContacto,
-    visita,
-    valorServicio,
-    estadoPago,
-    detallesCaso,
-    estado: newEstado
-  };
-  leads[leadIndex] = updatedLead;
-
-  localStorage.setItem('cca_leads', JSON.stringify(leads));
-
-  // Render table changes and close modal
   renderAdminLeads();
   closeCRMModal();
 
-  // Floating notification trigger
-  showCRMToast(`Guardando cambios en la nube...`);
+  showCRMToast('Guardando cambios en la nube...');
 
   const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
   if (isCloudConfigured) {
@@ -794,15 +773,16 @@ async function saveCRMDetails(e) {
       if (success) {
         showCRMToast(`Caso de ${lead.nombre} guardado en Google Sheets.`);
       } else {
-        showCRMToast(`Guardado en caché local. Error al conectar con Google.`);
+        showCRMToast('Guardado en caché local. Error al conectar con Google.');
       }
     } catch (err) {
       console.error(err);
-      showCRMToast(`Guardado localmente debido a un error de conexión.`);
+      showCRMToast('Guardado localmente debido a un error de conexión.');
     }
   } else {
     showCRMToast(`Caso de ${lead.nombre} guardado localmente.`);
   }
+}
 
 /**
  * Renders glassmorphic, floating confirmation toast in the screen bottom corner
