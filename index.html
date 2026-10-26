@@ -461,15 +461,14 @@
           <table class="db-table">
             <thead>
               <tr>
-                <th>Fecha Registro</th>
-                <th>Nombre Cliente</th>
+                <th>Fecha</th>
+                <th>Nombre Completo</th>
                 <th>Empresa</th>
                 <th>Teléfono</th>
-                <th>Servicio Solicitado</th>
-                <th>Visita CRM</th>
-                <th>Valor Cotizado</th>
-                <th>Estado Pago</th>
-                <th>Estado Lead</th>
+                <th>E-mail</th>
+                <th>Servicio de Interés</th>
+                <th>Estado (Status)</th>
+                <th>Cita</th>
                 <th style="text-align: center;">Acciones</th>
               </tr>
             </thead>
@@ -537,8 +536,12 @@
             <h4 class="crm-column-title">Gestión Comercial & Seguimiento</h4>
             
             <div class="form-group crm-field-group">
-              <label for="crm-field-fecha-contacto" class="form-label crm-label">Fecha de Contacto Comercial</label>
-              <input type="date" id="crm-field-fecha-contacto" class="form-control crm-control-editable">
+              <label for="crm-field-visita" class="form-label crm-label">Cita (Visita / Reunión)</label>
+              <select id="crm-field-visita" class="form-control crm-control-editable">
+              <option value="sin_agendar">Sin agendar</option>
+              <option value="virtual">Reunión Virtual (Meet / Teams)</option>
+              <option value="presencial">Visita Presencial (Oficina / Empresa)</option>
+              </select>
             </div>
             
             <div class="form-group crm-field-group">

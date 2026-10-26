@@ -422,14 +422,14 @@ function renderAdminLeads() {
   if (processLeadsSpan) processLeadsSpan.textContent = procesoCount;
 
   // Filter leads based on search term
-  const filteredLeads = leads.filter(lead => {
+    const filteredLeads = leads.filter(lead => {
+    const txt = v => String(v == null ? '' : v).toLowerCase();
     return (
-      lead.nombre.toLowerCase().includes(searchTerm) ||
-      lead.empresa.toLowerCase().includes(searchTerm) ||
-      lead.email.toLowerCase().includes(searchTerm) ||
-      lead.servicio.toLowerCase().includes(searchTerm) ||
-      (lead.detallesCaso && lead.detallesCaso.toLowerCase().includes(searchTerm)) ||
-      lead.telefono.toLowerCase().includes(searchTerm)
+      txt(lead.nombre).includes(searchTerm) ||
+      txt(lead.empresa).includes(searchTerm) ||
+      txt(lead.email).includes(searchTerm) ||
+      txt(lead.servicio).includes(searchTerm) ||
+      txt(lead.telefono).includes(searchTerm)
     );
   });
 
@@ -443,8 +443,7 @@ function renderAdminLeads() {
   if (emptyState) emptyState.style.display = 'none';
 
   // Render rows dynamically
-  leadsRows.innerHTML = filteredLeads.map(lead => {
-    // Visit Status
+    leadsRows.innerHTML = filteredLeads.map(lead => {
     let visitClass = 'status-visit-none';
     let visitText = 'Sin agendar';
     if (lead.visita === 'virtual') {
@@ -455,52 +454,20 @@ function renderAdminLeads() {
       visitText = 'Presencial';
     }
 
-    // Formatted Value
-    const formattedValor = formatCOP(lead.valorServicio || 0);
-
-    // Payment Status
-    let payClass = 'status-pay-none';
-    let payText = 'Sin cotizar';
-    if (lead.estadoPago === 'pendiente') {
-      payClass = 'status-pay-pending';
-      payText = 'Pendiente';
-    } else if (lead.estadoPago === 'pagado') {
-      payClass = 'status-pay-paid';
-      payText = 'Pagado';
-    } else if (lead.estadoPago === 'cuotas') {
-      payClass = 'status-pay-cuotas';
-      payText = 'Cuotas';
-    }
-
-    // Lead Status
     let statusClass = 'status-new';
     if (lead.estado === 'En Proceso') statusClass = 'status-process';
     if (lead.estado === 'Contactado') statusClass = 'status-contacted';
 
     return `
-      <tr data-id="${lead.id}">
-        <td style="white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #64748b;">
-          ${lead.fecha}
-        </td>
-        <td>
-          <div style="font-weight: 600; color: #ffffff;">${escapeHtml(lead.nombre)}</div>
-          <div style="font-size: 0.78rem; margin-top: 2px;"><a href="mailto:${lead.email}" style="color: #c5a880; text-decoration: underline;">${escapeHtml(lead.email)}</a></div>
-        </td>
+      <tr data-id="${escapeHtml(lead.id)}">
+        <td style="white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #64748b;">${escapeHtml(lead.fecha)}</td>
+        <td style="font-weight: 600; color: #ffffff;">${escapeHtml(lead.nombre)}</td>
         <td>${escapeHtml(lead.empresa)}</td>
         <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">${escapeHtml(lead.telefono)}</td>
+        <td style="font-size: 0.85rem;"><a href="mailto:${escapeHtml(lead.email)}" style="color: #c5a880; text-decoration: underline;">${escapeHtml(lead.email)}</a></td>
         <td style="font-size: 0.85rem; color: #94a3b8;">${escapeHtml(lead.servicio)}</td>
-        <td>
-          <span class="status-badge ${visitClass}">${visitText}</span>
-        </td>
-        <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; color: #ffffff;">
-          ${formattedValor}
-        </td>
-        <td>
-          <span class="status-badge ${payClass}">${payText}</span>
-        </td>
-        <td>
-          <span class="status-badge ${statusClass}">${lead.estado}</span>
-        </td>
+        <td><span class="status-badge ${statusClass}">${escapeHtml(lead.estado)}</span></td>
+        <td><span class="status-badge ${visitClass}">${visitText}</span></td>
         <td>
           <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
             <select class="status-select" onchange="updateLeadStatus('${lead.id}', this.value)">
@@ -519,7 +486,7 @@ function renderAdminLeads() {
       </tr>
     `;
   }).join('');
-}
+
 
 /**
  * Globally-exposed status modifier function
@@ -722,8 +689,7 @@ window.openCRMModal = function (leadId) {
   document.getElementById('crm-field-email').value = lead.email || '';
   document.getElementById('crm-field-servicio').value = lead.servicio || '';
 
-  // Prefill interactive CRM controls
-  document.getElementById('crm-field-fecha-contacto').value = lead.fechaContacto || '';
+    // Prefill interactive CRM controls
   document.getElementById('crm-field-visita').value = lead.visita || 'sin_agendar';
 
   const valor = lead.valorServicio || 0;
@@ -776,13 +742,20 @@ async function saveCRMDetails(e) {
 
   const lead = leads[leadIndex];
 
-  // Parse modified inputs
-  const fechaContacto = document.getElementById('crm-field-fecha-contacto').value;
+   // Parse modified inputs
   const visita = document.getElementById('crm-field-visita').value;
-  const valorInput = document.getElementById('crm-field-valor').value;
-  const valorServicio = valorInput ? parseInt(valorInput, 10) : 0;
-  const estadoPago = document.getElementById('crm-field-pago').value;
-  const detallesCaso = document.getElementById('crm-field-detalles').value;
+
+  // Si se agenda una cita, "Nuevo" pasa a "En Proceso"
+  let newEstado = lead.estado;
+  if (lead.estado === 'Nuevo' && visita !== 'sin_agendar') {
+    newEstado = 'En Proceso';
+  }
+
+  const updatedLead = {
+    ...lead,
+    visita,
+    estado: newEstado
+  };
 
   // Smart Workflow Transition: Upgrade "Nuevo" -> "En Proceso" when saving notes/modifying
   let newEstado = lead.estado;
@@ -937,7 +910,7 @@ async function loadLeadsFromServer() {
   // Renderizar estado de carga premium en la tabla
   leadsRows.innerHTML = `
     <tr>
-      <td colspan="10" style="text-align: center; padding: 50px 20px; color: var(--color-champagne);">
+      <td colspan="9" style="text-align: center; padding: 50px 20px; color: var(--color-champagne);">
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;">
           <svg class="spinner" viewBox="0 0 50 50" style="animation: rotate 2s linear infinite; width: 30px; height: 30px; color: var(--color-champagne); margin-right: 0;">
             <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="80, 200" stroke-dashoffset="0" stroke-linecap="round"></circle>
