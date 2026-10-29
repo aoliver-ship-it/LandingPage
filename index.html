@@ -450,12 +450,27 @@
 
       <!-- Filters & Database View -->
       <div class="db-main-card">
-        <div class="db-filters">
-          <div class="search-wrapper">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="db-search" class="form-control db-search-input" placeholder="Buscar por cliente, empresa, correo o servicio solicitado...">
-          </div>
+              <div class="db-filters" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <div class="search-wrapper" style="flex:1; min-width:260px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="db-search" class="form-control db-search-input" placeholder="Buscar por cliente, empresa, correo o servicio solicitado...">
         </div>
+        <select id="db-filter-estado" class="form-control" style="max-width:200px;">
+          <option value="">Todos los estados</option>
+          <option value="Nuevo">Nuevo</option>
+          <option value="En Proceso">En Proceso</option>
+          <option value="Contactado">Contactado</option>
+          <option value="Cerrado ganado">Cerrado ganado</option>
+          <option value="Cerrado perdido">Cerrado perdido</option>
+        </select>
+        <select id="db-filter-servicio" class="form-control" style="max-width:260px;">
+          <option value="">Todos los servicios</option>
+          <option value="Consultorías en Régimen Cambiario Colombiano">Régimen Cambiario</option>
+          <option value="Tercerización en Conciliación de Cuentas de Compensación">Tercerización Cuentas</option>
+          <option value="Acompañamiento en Conciliación de Cuentas de Compensación">Acompañamiento Cuentas</option>
+          <option value="Auditorias Exógena Cambiaria DIAN">Exógena DIAN</option>
+        </select>
+      </div>
 
         <div class="db-table-wrapper">
           <table class="db-table">
@@ -488,7 +503,7 @@
     </div>
   </div>
 
-  <!-- CRM Case Editor Modal Overlay -->
+   <!-- CRM Case Editor Modal Overlay -->
   <div class="crm-modal-overlay" id="crm-modal" style="display: none;">
     <div class="crm-modal-card">
       <div class="crm-modal-header">
@@ -498,39 +513,39 @@
         </div>
         <button class="crm-modal-close" id="crm-close-btn" aria-label="Cerrar CRM">&times;</button>
       </div>
-      
+
       <form id="crm-editor-form" novalidate>
         <div class="crm-modal-grid">
           <!-- Left Column: Read Only Inbound Info & Client Profile -->
           <div class="crm-column-left">
             <h4 class="crm-column-title">Datos Inbound de Captura</h4>
-            
+
             <div class="form-group crm-field-group">
               <label class="form-label crm-label">Cliente Interesado</label>
               <input type="text" id="crm-field-nombre" class="form-control crm-control" readonly>
             </div>
-            
+
             <div class="form-group crm-field-group">
               <label class="form-label crm-label">Empresa</label>
               <input type="text" id="crm-field-empresa" class="form-control crm-control" readonly>
             </div>
-            
+
             <div class="form-group crm-field-group">
               <label class="form-label crm-label">Teléfono Corporativo</label>
               <input type="text" id="crm-field-telefono" class="form-control crm-control" readonly>
             </div>
-            
+
             <div class="form-group crm-field-group">
               <label class="form-label crm-label">Correo Electrónico</label>
               <input type="text" id="crm-field-email" class="form-control crm-control" readonly>
             </div>
-            
+
             <div class="form-group crm-field-group">
               <label class="form-label crm-label">Servicio Solicitado</label>
               <input type="text" id="crm-field-servicio" class="form-control crm-control" readonly>
             </div>
           </div>
-          
+
           <!-- Right Column: Interactive CRM Case Records -->
           <div class="crm-column-right">
             <h4 class="crm-column-title">Gestión Comercial & Seguimiento</h4>
@@ -548,9 +563,20 @@
                 <option value="presencial">Visita Presencial (Oficina / Empresa)</option>
               </select>
             </div>
+
+            <div class="form-group crm-field-group">
+              <label for="crm-field-nueva-nota" class="form-label crm-label">Nueva nota de seguimiento</label>
+              <textarea id="crm-field-nueva-nota" class="form-control crm-control-editable" rows="2" placeholder="Ej. Llamé al cliente, quedó de enviar el Formulario 10..."></textarea>
+            </div>
+
+            <div class="form-group crm-field-group">
+              <label for="crm-field-detalles" class="form-label crm-label">Historial de notas</label>
+              <textarea id="crm-field-detalles" class="form-control crm-control-editable crm-textarea" readonly></textarea>
+            </div>
           </div>
-          
-          <div class="crm-modal-footer">
+        </div>
+
+        <div class="crm-modal-footer">
           <button type="button" class="btn btn-secondary" id="crm-cancel-btn">Cancelar</button>
           <button type="submit" class="btn btn-gold" id="crm-save-btn">Guardar Cambios</button>
         </div>
