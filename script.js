@@ -301,6 +301,11 @@ function initAdminDashboard() {
   if (searchInput) {
     searchInput.addEventListener('input', renderAdminLeads);
   }
+
+  ['db-filter-estado', 'db-filter-servicio'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', renderAdminLeads);
+  });
 }
 
 /**
@@ -422,15 +427,21 @@ function renderAdminLeads() {
   if (processLeadsSpan) processLeadsSpan.textContent = procesoCount;
 
   // Filter leads based on search term
-    const filteredLeads = leads.filter(lead => {
+  const filtroEstado = (document.getElementById('db-filter-estado') || {}).value || '';
+  const filtroServicio = (document.getElementById('db-filter-servicio') || {}).value || '';
+
+  const filteredLeads = leads.filter(lead => {
     const txt = v => String(v == null ? '' : v).toLowerCase();
-    return (
+    const coincideTexto = (
       txt(lead.nombre).includes(searchTerm) ||
       txt(lead.empresa).includes(searchTerm) ||
       txt(lead.email).includes(searchTerm) ||
       txt(lead.servicio).includes(searchTerm) ||
       txt(lead.telefono).includes(searchTerm)
     );
+    const coincideEstado = !filtroEstado || lead.estado === filtroEstado;
+    const coincideServicio = !filtroServicio || lead.servicio === filtroServicio;
+    return coincideTexto && coincideEstado && coincideServicio;
   });
 
   // Empty state handling
@@ -443,7 +454,7 @@ function renderAdminLeads() {
   if (emptyState) emptyState.style.display = 'none';
 
   // Render rows dynamically
-    leadsRows.innerHTML = filteredLeads.map(lead => {
+      leadsRows.innerHTML = filteredLeads.map(lead => {
     let visitClass = 'status-visit-none';
     let visitText = 'Sin agendar';
     if (lead.visita === 'virtual') {
@@ -457,13 +468,30 @@ function renderAdminLeads() {
     let statusClass = 'status-new';
     if (lead.estado === 'En Proceso') statusClass = 'status-process';
     if (lead.estado === 'Contactado') statusClass = 'status-contacted';
+    if (lead.estado === 'Cerrado ganado') statusClass = 'status-pay-paid';
+    if (lead.estado === 'Cerrado perdido') statusClass = 'status-pay-none';
+
+    // Alerta: "Nuevo" con más de 24 horas sin contactar
+    const vencido = lead.estado === 'Nuevo' && horasDesde(lead.fecha) > 24;
+    const alertaHtml = vencido
+      ? `<div style="margin-top:4px; font-size:0.72rem; font-weight:700; color:#ef4444;">⚠ +24 h sin contactar</div>`
+      : '';
+    const rowStyle = vencido ? 'style="box-shadow: inset 3px 0 0 #ef4444;"' : '';
+
+    // WhatsApp
+    const wa = whatsappLink(lead.telefono, lead.nombre);
+    const waHtml = wa
+      ? `<a href="${wa}" target="_blank" rel="noopener" title="Escribir por WhatsApp" style="margin-left:8px; color:#25d366; font-weight:700; text-decoration:none; font-size:0.8rem;">WhatsApp</a>`
+      : '';
+
+    const opt = (v) => `<option value="${v}" ${lead.estado === v ? 'selected' : ''}>${v}</option>`;
 
     return `
-      <tr data-id="${escapeHtml(lead.id)}">
-        <td style="white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #64748b;">${escapeHtml(lead.fecha)}</td>
+      <tr data-id="${escapeHtml(lead.id)}" ${rowStyle}>
+        <td style="white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #64748b;">${escapeHtml(lead.fecha)}${alertaHtml}</td>
         <td style="font-weight: 600; color: #ffffff;">${escapeHtml(lead.nombre)}</td>
         <td>${escapeHtml(lead.empresa)}</td>
-        <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">${escapeHtml(lead.telefono)}</td>
+        <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; white-space: nowrap;">${escapeHtml(lead.telefono)}${waHtml}</td>
         <td style="font-size: 0.85rem;"><a href="mailto:${escapeHtml(lead.email)}" style="color: #c5a880; text-decoration: underline;">${escapeHtml(lead.email)}</a></td>
         <td style="font-size: 0.85rem; color: #94a3b8;">${escapeHtml(lead.servicio)}</td>
         <td><span class="status-badge ${statusClass}">${escapeHtml(lead.estado)}</span></td>
@@ -471,9 +499,7 @@ function renderAdminLeads() {
         <td>
           <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
             <select class="status-select" onchange="updateLeadStatus('${lead.id}', this.value)">
-              <option value="Nuevo" ${lead.estado === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
-              <option value="En Proceso" ${lead.estado === 'En Proceso' ? 'selected' : ''}>En Proceso</option>
-              <option value="Contactado" ${lead.estado === 'Contactado' ? 'selected' : ''}>Contactado</option>
+              ${opt('Nuevo')}${opt('En Proceso')}${opt('Contactado')}${opt('Cerrado ganado')}${opt('Cerrado perdido')}
             </select>
             <button class="db-crm-btn" onclick="openCRMModal('${lead.id}')" title="Gestionar Caso (CRM)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
@@ -488,8 +514,6 @@ function renderAdminLeads() {
   }).join('');
 }
 
-
-
 /**
  * Globally-exposed status modifier function
  */
@@ -497,21 +521,27 @@ window.updateLeadStatus = async function (id, newStatus) {
   try {
     const leads = JSON.parse(localStorage.getItem('cca_leads') || '[]');
     const leadIndex = leads.findIndex(l => l.id === id);
-    if (leadIndex !== -1) {
-      leads[leadIndex].estado = newStatus;
-      localStorage.setItem('cca_leads', JSON.stringify(leads));
-      renderAdminLeads();
+    if (leadIndex === -1) return;
 
-      const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
-      if (isCloudConfigured) {
-        showCRMToast('Sincronizando estado en la nube...');
-        const success = await saveOrUpdateLeadCloud(leads[leadIndex], false);
-        if (success) {
-          showCRMToast('Estado actualizado en Google Sheets.');
-        } else {
-          showCRMToast('Guardado localmente. Error de conexión.');
-        }
-      }
+    // Si se cierra el caso, pedir el motivo y dejarlo en el historial
+    if (newStatus === 'Cerrado ganado' || newStatus === 'Cerrado perdido') {
+      const motivo = prompt(`Motivo del cierre (${newStatus}):`, '');
+      if (motivo === null) { renderAdminLeads(); return; } // canceló
+      leads[leadIndex].detallesCaso = agregarNota(
+        leads[leadIndex].detallesCaso,
+        `${newStatus.toUpperCase()}: ${motivo || 'sin motivo'}`
+      );
+    }
+
+    leads[leadIndex].estado = newStatus;
+    localStorage.setItem('cca_leads', JSON.stringify(leads));
+    renderAdminLeads();
+
+    const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
+    if (isCloudConfigured) {
+      showCRMToast('Sincronizando estado en la nube...');
+      const success = await saveOrUpdateLeadCloud(leads[leadIndex], false);
+      showCRMToast(success ? 'Estado actualizado en Google Sheets.' : 'Guardado localmente. Error de conexión.');
     }
   } catch (error) {
     console.error('Error updating lead status in local database:', error);
@@ -609,6 +639,31 @@ function exportLeadsToCSV() {
   document.body.removeChild(link);
 }
 
+/** Horas transcurridas desde una fecha "YYYY-MM-DD HH:MM:SS" */
+function horasDesde(fechaStr) {
+  if (!fechaStr) return 0;
+  const d = new Date(String(fechaStr).replace(' ', 'T'));
+  if (isNaN(d.getTime())) return 0;
+  return (Date.now() - d.getTime()) / 3600000;
+}
+
+/** Enlace de WhatsApp (Colombia) con mensaje prellenado */
+function whatsappLink(telefono, nombre) {
+  let num = String(telefono || '').replace(/\D/g, '');
+  if (num.length === 10) num = '57' + num;
+  if (num.length < 11) return '';
+  const msg = `Hola ${nombre || ''}, le escribimos de CCA s.a.s. por su solicitud de asesoría cambiaria.`;
+  return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+}
+
+/** Agrega una nota con fecha al inicio del historial */
+function agregarNota(existente, texto) {
+  const t = String(texto || '').trim();
+  if (!t) return existente || '';
+  const linea = `[${getFormattedDate()}] ${t}`;
+  return existente ? linea + '\n' + existente : linea;
+}
+
 /**
  * Simple HTML sanitizer
  */
@@ -675,6 +730,7 @@ function initCRMInputListeners() {
     form.addEventListener('submit', saveCRMDetails);
   }
 };
+
 /**
  * Opens double-column glassmorphic modal prefilled with CRM Case Details
  */
@@ -684,24 +740,18 @@ window.openCRMModal = function (leadId) {
   const lead = leads.find(l => l.id === leadId);
   if (!lead) return;
 
-  // Set Read-Only inbound details
-  document.getElementById('crm-field-nombre').value = lead.nombre || '';
-  document.getElementById('crm-field-empresa').value = lead.empresa || '';
-  document.getElementById('crm-field-telefono').value = lead.telefono || '';
-  document.getElementById('crm-field-email').value = lead.email || '';
-  document.getElementById('crm-field-servicio').value = lead.servicio || '';
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
 
-    // Prefill interactive CRM controls
-  document.getElementById('crm-field-visita').value = lead.visita || 'sin_agendar';
-  document.getElementById('crm-field-fecha-contacto').value = lead.fechaContacto || '';
-  const valor = lead.valorServicio || 0;
-  document.getElementById('crm-field-valor').value = valor || '';
-  document.getElementById('crm-valor-formatted').textContent = formatCOP(valor);
+  setVal('crm-field-nombre', lead.nombre || '');
+  setVal('crm-field-empresa', lead.empresa || '');
+  setVal('crm-field-telefono', lead.telefono || '');
+  setVal('crm-field-email', lead.email || '');
+  setVal('crm-field-servicio', lead.servicio || '');
+  setVal('crm-field-fecha-contacto', lead.fechaContacto || '');
+  setVal('crm-field-visita', lead.visita || 'sin_agendar');
+  setVal('crm-field-detalles', lead.detallesCaso || '');
+  setVal('crm-field-nueva-nota', '');
 
-  document.getElementById('crm-field-pago').value = lead.estadoPago || 'sin_cotizar';
-  document.getElementById('crm-field-detalles').value = lead.detallesCaso || '';
-
-  // Custom visual feedback on client header
   const clientTitle = document.getElementById('crm-client-title');
   if (clientTitle) {
     clientTitle.textContent = `Gestión de Caso: ${lead.nombre} (${lead.empresa})`;
