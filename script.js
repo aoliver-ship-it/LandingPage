@@ -4,7 +4,7 @@
  */
 
 // URL del Web App de Google Apps Script (Reemplazar por tu URL para conectar con Google Sheets y Gmail)
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwHAAX6UUF5kwHjD2g6nE-jyTyCQtBxf2LoYyNMrFMLmKjvAKdq-Q-bl2d_4qpFLXAP/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxq8zWlE1RdEQR0va03o5Dr-K2f8D6ZxYCurMurKO77WBAs5bGQK4sNBQbyT4JCMJ4c/exec';
 document.addEventListener('DOMContentLoaded', () => {
   initScrollHeader();
   initServiceSelectRedirect();
