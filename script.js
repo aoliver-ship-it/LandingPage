@@ -751,7 +751,7 @@ window.openCRMModal = function (leadId) {
   setVal('crm-field-telefono', lead.telefono || '');
   setVal('crm-field-email', lead.email || '');
   setVal('crm-field-servicio', lead.servicio || '');
-  setVal('crm-field-fecha-contacto', lead.fechaContacto || '');
+  setVal('crm-field-fecha-contacto', /^\d{4}-\d{2}-\d{2}$/.test(String(lead.fechaContacto)) ? lead.fechaContacto : '');
   setVal('crm-field-visita', lead.visita || 'sin_agendar');
   setVal('crm-field-detalles', lead.detallesCaso || '');
   setVal('crm-field-nueva-nota', '');
