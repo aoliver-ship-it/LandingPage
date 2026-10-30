@@ -463,6 +463,9 @@ function renderAdminLeads() {
     } else if (lead.visita === 'presencial') {
       visitClass = 'status-visit-presencial';
       visitText = 'Presencial';
+    } else if (lead.visita === 'telefonica') {
+      visitClass = 'status-visit-virtual';
+      visitText = 'Telefónica';
     }
 
     let statusClass = 'status-new';
@@ -597,6 +600,7 @@ function exportLeadsToCSV() {
     let visitaText = 'Sin agendar';
     if (lead.visita === 'virtual') visitaText = 'Reunión Virtual';
     if (lead.visita === 'presencial') visitaText = 'Visita Presencial';
+    if (lead.visita === 'telefonica') visitaText = 'Llamada Telefónica';
 
     // Translate payment value to human readable Spanish
     let pagoText = 'Sin cotizar';
