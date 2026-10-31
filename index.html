@@ -564,13 +564,45 @@
                 <option value="telefonica">Llamada Telefónica</option>
               </select>
             </div>
+            <div class="form-group crm-field-group">
+              <label for="crm-field-cita-estado" class="form-label crm-label">¿Se cumplió la cita / llamada / videoconferencia?</label>
+              <select id="crm-field-cita-estado" class="form-control crm-control-editable">
+                <option value="pendiente">Pendiente</option>
+                <option value="cumplida">Cumplida</option>
+                <option value="no_cumplida">No se realizó</option>
+                <option value="reprogramada">Reprogramada</option>
+              </select>
+            </div>
 
+            <div class="form-group crm-field-group">
+              <label class="form-label crm-label">Ofertas comerciales</label>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <select id="crm-of-tipo" class="form-control crm-control-editable" style="flex:1; min-width:170px;" onchange="ofertaTipoChange()">
+                  <option value="Auditoría">Auditoría</option>
+                  <option value="Tercerización">Tercerización</option>
+                  <option value="Acompañamiento Mensual">Acompañamiento Mensual</option>
+                  <option value="Consultoría">Consultoría</option>
+                  <option value="Revisión Exógena">Revisión Exógena</option>
+                </select>
+                <select id="crm-of-anios" class="form-control crm-control-editable" style="width:110px;">
+                  <option value="1">1 año</option>
+                  <option value="2">2 años</option>
+                  <option value="3">3 años</option>
+                  <option value="4">4 años</option>
+                  <option value="5">5 años</option>
+                </select>
+                <input type="number" id="crm-of-valor" class="form-control crm-control-editable" style="width:150px;" placeholder="Valor inicial">
+                <button type="button" class="btn btn-gold" onclick="ofertaAgregar()">Agregar</button>
+              </div>
+              <div id="crm-ofertas-list" style="margin-top:10px;"></div>
+              <div id="crm-ofertas-total" style="margin-top:8px; font-size:0.82rem; color:#94a3b8;"></div>
+            </div>   
       <div class="form-group crm-field-group">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <label for="crm-field-valor" class="form-label crm-label">Valor del Servicio Cotizado (COP)</label>
+         <label for="crm-field-valor" class="form-label crm-label">Valor total ganado (COP)</label>
           <span id="crm-valor-formatted" style="font-size: 0.85rem; color: var(--color-accent-gold); font-weight: 600;">$ 0</span>
         </div>
-        <input type="number" id="crm-field-valor" class="form-control crm-control-editable" placeholder="Ej. 2500000">
+        <input type="number" id="crm-field-valor" class="form-control crm-control-editable" placeholder="Se calcula con las ofertas ganadas" readonly>
       </div>
 
       <div class="form-group crm-field-group">

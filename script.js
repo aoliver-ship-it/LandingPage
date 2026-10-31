@@ -482,7 +482,7 @@ function renderAdminLeads() {
     const dias = (lead.visita && lead.visita !== 'sin_agendar') ? diasParaCita(lead.fechaContacto) : null;
     let citaAviso = '';
     let citaColor = '';
-    if (dias !== null && lead.estado !== 'Cerrado ganado' && lead.estado !== 'Cerrado perdido') {
+        if (dias !== null && lead.estado !== 'Cerrado ganado' && lead.estado !== 'Cerrado perdido' && lead.citaEstado !== 'cumplida') {
       if (dias === 0) { citaAviso = '📅 Cita HOY'; citaColor = '#f59e0b'; }
       else if (dias > 0 && dias <= 3) { citaAviso = `📅 Cita en ${dias} día${dias > 1 ? 's' : ''}`; citaColor = '#3b82f6'; }
       else if (dias < 0) { citaAviso = '⏰ Cita vencida'; citaColor = '#ef4444'; }
@@ -500,6 +500,14 @@ function renderAdminLeads() {
       : '';
 
     const opt = (v) => `<option value="${v}" ${lead.estado === v ? 'selected' : ''}>${v}</option>`;
+    const ce = lead.citaEstado;
+    const ceInfo = { cumplida: ['✔ Cumplida', '#22c55e'], no_cumplida: ['✖ No se realizó', '#ef4444'], reprogramada: ['↻ Reprogramada', '#f59e0b'] }[ce];
+    const ceHtml = (lead.visita && lead.visita !== 'sin_agendar' && ceInfo)
+      ? `<div style="margin-top:4px; font-size:0.72rem; font-weight:700; color:${ceInfo[1]};">${ceInfo[0]}</div>` : '';
+    const ofs = Array.isArray(lead.ofertas) ? lead.ofertas : [];
+    const ganadoTot = ofs.filter(o => o.estado === 'ganada').reduce((s, o) => s + (o.valorFinal || 0), 0);
+    const ofertaHtml = ofs.length
+      ? `<div style="margin-top:4px; font-size:0.72rem; color:#94a3b8;">${ofs.length} oferta${ofs.length > 1 ? 's' : ''}${ganadoTot ? ' · ganado ' + formatCOP(ganadoTot) : ''}</div>` : '';
 
     return `
       <tr data-id="${escapeHtml(lead.id)}" ${rowStyle}>
@@ -509,8 +517,8 @@ function renderAdminLeads() {
         <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; white-space: nowrap;">${escapeHtml(lead.telefono)}${waHtml}</td>
         <td style="font-size: 0.85rem;"><a href="mailto:${escapeHtml(lead.email)}" style="color: #c5a880; text-decoration: underline;">${escapeHtml(lead.email)}</a></td>
         <td style="font-size: 0.85rem; color: #94a3b8;">${escapeHtml(lead.servicio)}</td>
-        <td><span class="status-badge ${statusClass}">${escapeHtml(lead.estado)}</span></td>
-        <td><span class="status-badge ${visitClass}">${visitText}</span>${citaHtml}</td>
+        <td><span class="status-badge ${statusClass}">${escapeHtml(lead.estado)}</span>${ofertaHtml}</td>
+        <td><span class="status-badge ${visitClass}">${visitText}</span>${citaHtml}${ceHtml}</td>
         <td>
           <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
             <select class="status-select" onchange="updateLeadStatus('${lead.id}', this.value)">
@@ -781,6 +789,10 @@ window.openCRMModal = function (leadId) {
   setVal('crm-field-pago', lead.estadoPago || 'sin_cotizar');
   const fmtVal = document.getElementById('crm-valor-formatted');
   if (fmtVal) fmtVal.textContent = formatCOP(lead.valorServicio || 0);
+  setVal('crm-field-cita-estado', lead.citaEstado || 'pendiente');
+  currentOfertas = Array.isArray(lead.ofertas) ? JSON.parse(JSON.stringify(lead.ofertas)) : [];
+  ofertaTipoChange();
+  renderOfertas();
 
   const clientTitle = document.getElementById('crm-client-title');
   if (clientTitle) {
@@ -827,8 +839,8 @@ async function saveCRMDetails(e) {
 
   const fechaContacto = getVal('crm-field-fecha-contacto', lead.fechaContacto || '');
   const visita = getVal('crm-field-visita', lead.visita || 'sin_agendar');
-  const valorRaw = getVal('crm-field-valor', lead.valorServicio || 0);
-  const valorServicio = valorRaw ? parseInt(valorRaw, 10) || 0 : 0;
+  const valorServicio = currentOfertas.filter(o => o.estado === 'ganada').reduce((s, o) => s + (o.valorFinal || 0), 0);
+  const citaEstado = getVal('crm-field-cita-estado', lead.citaEstado || 'pendiente');
   const estadoPago = getVal('crm-field-pago', lead.estadoPago || 'sin_cotizar');
   const notaNueva = getVal('crm-field-nueva-nota', '');
   const historialEditado = getVal('crm-field-detalles', lead.detallesCaso || '');
@@ -839,7 +851,10 @@ async function saveCRMDetails(e) {
     newEstado = 'En Proceso';
   }
 
-  const updatedLead = { ...lead, fechaContacto, visita, valorServicio, estadoPago, detallesCaso, estado: newEstado };
+  if (currentOfertas.some(o => o.estado === 'ganada') && lead.estado !== 'Cerrado ganado') {
+    newEstado = 'Cerrado ganado';
+  }
+  const updatedLead = { ...lead, fechaContacto, visita, citaEstado, ofertas: currentOfertas, valorServicio, estadoPago, detallesCaso, estado: newEstado };
   leads[leadIndex] = updatedLead;
   localStorage.setItem('cca_leads', JSON.stringify(leads));
 
