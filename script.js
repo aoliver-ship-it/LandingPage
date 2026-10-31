@@ -713,6 +713,13 @@ function actualizarTotalOfertas() {
   if (fmt) fmt.textContent = formatCOP(ganado);
   const tot = document.getElementById('crm-ofertas-total');
   if (tot) tot.textContent = `Ganado: ${formatCOP(ganado)} · En negociación: ${formatCOP(abierto)}`;
+  const pago = document.getElementById('crm-field-pago');
+  if (pago) {
+  const hayGanada = currentOfertas.some(o => o.estado === 'ganada');
+  pago.disabled = !hayGanada;
+  if (!hayGanada) pago.value = 'sin_cotizar';
+  else if (pago.value === 'sin_cotizar') pago.value = 'pendiente';
+  }
 }
 
 window.ofertaAgregar = function () {
@@ -939,7 +946,10 @@ async function saveCRMDetails(e) {
   const visita = getVal('crm-field-visita', lead.visita || 'sin_agendar');
   const valorServicio = currentOfertas.filter(o => o.estado === 'ganada').reduce((s, o) => s + (o.valorFinal || 0), 0);
   const citaEstado = getVal('crm-field-cita-estado', lead.citaEstado || 'pendiente');
-  const estadoPago = getVal('crm-field-pago', lead.estadoPago || 'sin_cotizar');
+  let estadoPago = getVal('crm-field-pago', lead.estadoPago || 'sin_cotizar');
+  const hayGanada = currentOfertas.some(o => o.estado === 'ganada');
+  if (!hayGanada) estadoPago = 'sin_cotizar';
+  else if (estadoPago === 'sin_cotizar') estadoPago = 'pendiente';
   const notaNueva = getVal('crm-field-nueva-nota', '');
   const historialEditado = getVal('crm-field-detalles', lead.detallesCaso || '');
   const detallesCaso = agregarNota(historialEditado, notaNueva);
