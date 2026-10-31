@@ -565,6 +565,23 @@
               </select>
             </div>
 
+      <div class="form-group crm-field-group">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label for="crm-field-valor" class="form-label crm-label">Valor del Servicio Cotizado (COP)</label>
+          <span id="crm-valor-formatted" style="font-size: 0.85rem; color: var(--color-accent-gold); font-weight: 600;">$ 0</span>
+        </div>
+        <input type="number" id="crm-field-valor" class="form-control crm-control-editable" placeholder="Ej. 2500000">
+      </div>
+
+      <div class="form-group crm-field-group">
+        <label for="crm-field-pago" class="form-label crm-label">Estado y Esquema de Pago</label>
+        <select id="crm-field-pago" class="form-control crm-control-editable">
+          <option value="sin_cotizar">Sin cotizar / Prospecto</option>
+          <option value="pendiente">Cotizado - Pendiente de Pago</option>
+          <option value="pagado">Pagado Completo (Contado)</option>
+          <option value="cuotas">Financiado (Pago en Cuotas)</option>
+        </select>
+      </div>
             <div class="form-group crm-field-group">
               <label for="crm-field-nueva-nota" class="form-label crm-label">Nueva nota de seguimiento</label>
               <textarea id="crm-field-nueva-nota" class="form-control crm-control-editable" rows="2" placeholder="Ej. Llamé al cliente, quedó de enviar el Formulario 10..."></textarea>
@@ -572,7 +589,7 @@
 
             <div class="form-group crm-field-group">
               <label for="crm-field-detalles" class="form-label crm-label">Historial de notas</label>
-              <textarea id="crm-field-detalles" class="form-control crm-control-editable crm-textarea" readonly></textarea>
+              <textarea id="crm-field-detalles" class="form-control crm-control-editable crm-textarea" placeholder="Historial de gestión (puede editarlo o pegar gestión anterior)"></textarea>
             </div>
           </div>
         </div>

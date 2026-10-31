@@ -479,7 +479,19 @@ function renderAdminLeads() {
     const alertaHtml = vencido
       ? `<div style="margin-top:4px; font-size:0.72rem; font-weight:700; color:#ef4444;">⚠ +24 h sin contactar</div>`
       : '';
-    const rowStyle = vencido ? 'style="box-shadow: inset 3px 0 0 #ef4444;"' : '';
+    const dias = (lead.visita && lead.visita !== 'sin_agendar') ? diasParaCita(lead.fechaContacto) : null;
+    let citaAviso = '';
+    let citaColor = '';
+    if (dias !== null && lead.estado !== 'Cerrado ganado' && lead.estado !== 'Cerrado perdido') {
+      if (dias === 0) { citaAviso = '📅 Cita HOY'; citaColor = '#f59e0b'; }
+      else if (dias > 0 && dias <= 3) { citaAviso = `📅 Cita en ${dias} día${dias > 1 ? 's' : ''}`; citaColor = '#3b82f6'; }
+      else if (dias < 0) { citaAviso = '⏰ Cita vencida'; citaColor = '#ef4444'; }
+    }
+    const citaHtml = citaAviso
+      ? `<div style="margin-top:4px; font-size:0.72rem; font-weight:700; color:${citaColor};">${citaAviso}</div>`
+      : '';
+    const borde = vencido ? '#ef4444' : (citaColor || '');
+    const rowStyle = borde ? `style="box-shadow: inset 3px 0 0 ${borde};"` : '';   
 
     // WhatsApp
     const wa = whatsappLink(lead.telefono, lead.nombre);
@@ -498,7 +510,7 @@ function renderAdminLeads() {
         <td style="font-size: 0.85rem;"><a href="mailto:${escapeHtml(lead.email)}" style="color: #c5a880; text-decoration: underline;">${escapeHtml(lead.email)}</a></td>
         <td style="font-size: 0.85rem; color: #94a3b8;">${escapeHtml(lead.servicio)}</td>
         <td><span class="status-badge ${statusClass}">${escapeHtml(lead.estado)}</span></td>
-        <td><span class="status-badge ${visitClass}">${visitText}</span></td>
+        <td><span class="status-badge ${visitClass}">${visitText}</span>${citaHtml}</td>
         <td>
           <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
             <select class="status-select" onchange="updateLeadStatus('${lead.id}', this.value)">
@@ -643,6 +655,16 @@ function exportLeadsToCSV() {
   document.body.removeChild(link);
 }
 
+/** Días hasta la cita (0 = hoy, negativo = vencida). null si no hay fecha válida */
+function diasParaCita(fechaStr) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaStr || ''))) return null;
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  const cita = new Date(y, m - 1, d);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  return Math.round((cita - hoy) / 86400000);
+}
+
 /** Horas transcurridas desde una fecha "YYYY-MM-DD HH:MM:SS" */
 function horasDesde(fechaStr) {
   if (!fechaStr) return 0;
@@ -755,6 +777,10 @@ window.openCRMModal = function (leadId) {
   setVal('crm-field-visita', lead.visita || 'sin_agendar');
   setVal('crm-field-detalles', lead.detallesCaso || '');
   setVal('crm-field-nueva-nota', '');
+  setVal('crm-field-valor', lead.valorServicio || '');
+  setVal('crm-field-pago', lead.estadoPago || 'sin_cotizar');
+  const fmtVal = document.getElementById('crm-valor-formatted');
+  if (fmtVal) fmtVal.textContent = formatCOP(lead.valorServicio || 0);
 
   const clientTitle = document.getElementById('crm-client-title');
   if (clientTitle) {
@@ -784,6 +810,7 @@ window.closeCRMModal = function () {
   }
   currentEditingLeadId = null;
 };
+
 /**
  * Processes CRM modifications, saves them to database, and triggers notifications
  */
@@ -796,39 +823,35 @@ async function saveCRMDetails(e) {
   if (leadIndex === -1) return;
 
   const lead = leads[leadIndex];
+  const getVal = (id, def) => { const el = document.getElementById(id); return el ? el.value : def; };
 
-  const fechaContacto = document.getElementById('crm-field-fecha-contacto').value;
-  const visita = document.getElementById('crm-field-visita').value;
+  const fechaContacto = getVal('crm-field-fecha-contacto', lead.fechaContacto || '');
+  const visita = getVal('crm-field-visita', lead.visita || 'sin_agendar');
+  const valorRaw = getVal('crm-field-valor', lead.valorServicio || 0);
+  const valorServicio = valorRaw ? parseInt(valorRaw, 10) || 0 : 0;
+  const estadoPago = getVal('crm-field-pago', lead.estadoPago || 'sin_cotizar');
+  const notaNueva = getVal('crm-field-nueva-nota', '');
+  const historialEditado = getVal('crm-field-detalles', lead.detallesCaso || '');
+  const detallesCaso = agregarNota(historialEditado, notaNueva);
 
   let newEstado = lead.estado;
-  if (lead.estado === 'Nuevo' && (visita !== 'sin_agendar' || fechaContacto)) {
+  if (lead.estado === 'Nuevo' && (visita !== 'sin_agendar' || fechaContacto || notaNueva.trim() || valorServicio > 0 || estadoPago !== 'sin_cotizar')) {
     newEstado = 'En Proceso';
   }
 
-  const updatedLead = {
-    ...lead,
-    fechaContacto,
-    visita,
-    estado: newEstado
-  };
+  const updatedLead = { ...lead, fechaContacto, visita, valorServicio, estadoPago, detallesCaso, estado: newEstado };
   leads[leadIndex] = updatedLead;
-
   localStorage.setItem('cca_leads', JSON.stringify(leads));
 
   renderAdminLeads();
   closeCRMModal();
-
   showCRMToast('Guardando cambios en la nube...');
 
   const isCloudConfigured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== '' && !APPS_SCRIPT_URL.includes('TU_URL_DE_APPS_SCRIPT');
   if (isCloudConfigured) {
     try {
       const success = await saveOrUpdateLeadCloud(updatedLead, false);
-      if (success) {
-        showCRMToast(`Caso de ${lead.nombre} guardado en Google Sheets.`);
-      } else {
-        showCRMToast('Guardado en caché local. Error al conectar con Google.');
-      }
+      showCRMToast(success ? `Caso de ${lead.nombre} guardado en Google Sheets.` : 'Guardado en caché local. Error al conectar con Google.');
     } catch (err) {
       console.error(err);
       showCRMToast('Guardado localmente debido a un error de conexión.');
