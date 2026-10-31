@@ -663,6 +663,104 @@ function exportLeadsToCSV() {
   document.body.removeChild(link);
 }
 
+let currentOfertas = [];
+
+window.ofertaTipoChange = function () {
+  const t = document.getElementById('crm-of-tipo');
+  const a = document.getElementById('crm-of-anios');
+  if (t && a) a.style.display = t.value === 'Auditoría' ? '' : 'none';
+};
+
+function renderOfertas() {
+  const box = document.getElementById('crm-ofertas-list');
+  if (!box) return;
+  if (!currentOfertas.length) {
+    box.innerHTML = '<div style="font-size:0.8rem; color:#64748b;">Sin ofertas registradas.</div>';
+  } else {
+    box.innerHTML = currentOfertas.map(o => {
+      const nombre = o.tipo === 'Auditoría' ? `Auditoría (${o.anios} año${Number(o.anios) > 1 ? 's' : ''})` : o.tipo;
+      const colores = { abierta: '#f59e0b', ganada: '#22c55e', perdida: '#ef4444' };
+      const etiqueta = { abierta: 'Abierta', ganada: 'GANADA', perdida: 'Perdida' };
+      const final = o.estado === 'ganada' ? ` → cerró en <b>${formatCOP(o.valorFinal)}</b>` : '';
+      const btn = 'style="font-size:0.72rem; padding:3px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:#e2e8f0; cursor:pointer;"';
+      const acciones = o.estado === 'abierta'
+        ? `<button type="button" ${btn} onclick="ofertaGanada('${o.id}')">Ganada</button>
+           <button type="button" ${btn} onclick="ofertaPerdida('${o.id}')">Perdida</button>`
+        : `<button type="button" ${btn} onclick="ofertaReabrir('${o.id}')">Reabrir</button>`;
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; margin-bottom:6px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); border-left:3px solid ${colores[o.estado]};">
+          <div style="font-size:0.82rem;">
+            <div style="font-weight:600; color:#ffffff;">${escapeHtml(nombre)}</div>
+            <div style="color:#94a3b8;">Inicial ${formatCOP(o.valorInicial)}${final}
+              · <span style="color:${colores[o.estado]}; font-weight:700;">${etiqueta[o.estado]}</span></div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            ${acciones}
+            <button type="button" ${btn} onclick="ofertaEliminar('${o.id}')">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  actualizarTotalOfertas();
+}
+
+function actualizarTotalOfertas() {
+  const ganado = currentOfertas.filter(o => o.estado === 'ganada').reduce((s, o) => s + (o.valorFinal || 0), 0);
+  const abierto = currentOfertas.filter(o => o.estado === 'abierta').reduce((s, o) => s + (o.valorInicial || 0), 0);
+  const inp = document.getElementById('crm-field-valor');
+  if (inp) inp.value = ganado || '';
+  const fmt = document.getElementById('crm-valor-formatted');
+  if (fmt) fmt.textContent = formatCOP(ganado);
+  const tot = document.getElementById('crm-ofertas-total');
+  if (tot) tot.textContent = `Ganado: ${formatCOP(ganado)} · En negociación: ${formatCOP(abierto)}`;
+}
+
+window.ofertaAgregar = function () {
+  const tipo = document.getElementById('crm-of-tipo').value;
+  const anios = parseInt(document.getElementById('crm-of-anios').value, 10) || 1;
+  const valor = parseInt(document.getElementById('crm-of-valor').value, 10) || 0;
+  if (valor <= 0) { alert('Ingrese el valor inicial de la oferta.'); return; }
+  currentOfertas.push({
+    id: 'of_' + Date.now(), tipo, anios: tipo === 'Auditoría' ? anios : 0,
+    valorInicial: valor, estado: 'abierta', valorFinal: 0, fechaCierre: ''
+  });
+  document.getElementById('crm-of-valor').value = '';
+  renderOfertas();
+};
+
+window.ofertaGanada = function (id) {
+  const o = currentOfertas.find(x => x.id === id);
+  if (!o) return;
+  const v = prompt('Valor final al que se cerró la venta (COP):', o.valorInicial);
+  if (v === null) return;
+  o.valorFinal = parseInt(String(v).replace(/\D/g, ''), 10) || 0;
+  o.estado = 'ganada';
+  o.fechaCierre = getFormattedDate().slice(0, 10);
+  renderOfertas();
+};
+
+window.ofertaPerdida = function (id) {
+  const o = currentOfertas.find(x => x.id === id);
+  if (!o) return;
+  o.estado = 'perdida';
+  o.valorFinal = 0;
+  o.fechaCierre = getFormattedDate().slice(0, 10);
+  renderOfertas();
+};
+
+window.ofertaReabrir = function (id) {
+  const o = currentOfertas.find(x => x.id === id);
+  if (!o) return;
+  o.estado = 'abierta'; o.valorFinal = 0; o.fechaCierre = '';
+  renderOfertas();
+};
+
+window.ofertaEliminar = function (id) {
+  if (!confirm('¿Eliminar esta oferta?')) return;
+  currentOfertas = currentOfertas.filter(x => x.id !== id);
+  renderOfertas();
+};
+
 /** Días hasta la cita (0 = hoy, negativo = vencida). null si no hay fecha válida */
 function diasParaCita(fechaStr) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaStr || ''))) return null;
